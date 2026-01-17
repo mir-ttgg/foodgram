@@ -1,10 +1,14 @@
-from django.urls import path, include
+from django.urls import include, path
 from rest_framework import routers
-from .views import UserViewSet, UserAvatarView, TagViewSet, RecipeViewSet
+
+from .views import (IngredientViewSet, RecipeViewSet, TagViewSet,
+                    UserAvatarView, UserViewSet)
+
 router = routers.DefaultRouter()
 router.register(r'users', UserViewSet)
 router.register(r'tags', TagViewSet)
 router.register(r'recipes', RecipeViewSet)
+router.register(r'ingredients', IngredientViewSet)
 
 urlpatterns = [
     path('users/me/avatar/', UserAvatarView.as_view(), name='user-avatar'),

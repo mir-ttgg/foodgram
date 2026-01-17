@@ -1,7 +1,9 @@
 import json
 from pathlib import Path
+
 from django.core.management.base import BaseCommand
-from food.models import Ingredient
+
+from food.models import Ingredient as Ing
 
 
 class Command(BaseCommand):
@@ -27,7 +29,7 @@ class Command(BaseCommand):
                     unit = item.get('measurement_unit', '').strip()
 
                     if name:
-                        ingredient, created_new = Ingredient.objects.get_or_create(
+                        ingredient, created_new = Ing.objects.get_or_create(
                             name=name,
                             defaults={'measurement_unit': unit}
                         )
