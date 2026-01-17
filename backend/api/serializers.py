@@ -1,3 +1,5 @@
+import re
+
 from django.contrib.auth import get_user_model
 from djoser.serializers import \
     UserCreateSerializer as DjoserUserCreateSerializer
@@ -36,7 +38,7 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = ['id', 'username', 'email',
                   'first_name', 'last_name', 'password',
-                  'avatar', 'is_subscribed']
+                  'is_subscribed', 'avatar']
         extra_kwargs = {'password': {'write_only': True}}
 
 
@@ -186,10 +188,15 @@ class FollowSerializer(serializers.ModelSerializer):
 
 
 class UserRegistrationSerializer(DjoserUserCreateSerializer):
-    class Meta:
+    class Meta(DjoserUserCreateSerializer.Meta):
         model = User
         fields = ['id', 'username', 'email', 'first_name',
-                  'last_name', 'password', 'avatar']
+                  'last_name', 'password']
+
+    def validate_username(self, value):
+        if not re.match(r'^[\w.@+-]+$', value):
+            raise serializers.ValidationError(
+                'Некорректный формат имени пользователя')
 
 
 class RecipeShortSerializer(serializers.ModelSerializer):

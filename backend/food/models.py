@@ -69,6 +69,7 @@ class Tag(models.Model):
     class Meta:
         verbose_name = 'Тег'
         verbose_name_plural = 'Теги'
+        ordering = ['name']
 
     def __str__(self):
         return self.name
@@ -82,7 +83,7 @@ class Recipe(models.Model):
     title = models.CharField(max_length=200, verbose_name='Название')
     image = models.ImageField(upload_to='recipes/', verbose_name='Изображение')
     text = models.TextField('Описание')
-    ingredients = ingredients = models.ManyToManyField(
+    ingredients = models.ManyToManyField(
         Ingredient,
         through='RecipeIngredient',
         through_fields=('recipe', 'ingredient'),
@@ -100,6 +101,7 @@ class Recipe(models.Model):
     class Meta:
         verbose_name = 'Рецепт'
         verbose_name_plural = 'Рецепты'
+        ordering = ['-id']
 
     def __str__(self):
         return self.name

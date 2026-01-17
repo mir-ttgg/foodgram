@@ -6,11 +6,18 @@ class Api {
 
   checkResponse(res) {
     return new Promise((resolve, reject) => {
-      if (res.status === 204) {
-        return resolve(res);
+      if (res.status === 204 || res.status === 201) {
+        // Для 204 и 201 может быть пустой ответ или с данными
+        if (res.headers.get("content-length") === "0" || !res.headers.get("content-type")?.includes("application/json")) {
+          return resolve({});
+        }
+        return res.json().then((data) => resolve(data)).catch(() => resolve({}));
       }
       const func = res.status < 400 ? resolve : reject;
-      res.json().then((data) => func(data));
+      res.json().then((data) => func(data)).catch(() => {
+        // Если не удалось распарсить JSON, возвращаем объект с ошибкой
+        reject({ error: `HTTP ${res.status}: ${res.statusText}` });
+      });
     });
   }
 
