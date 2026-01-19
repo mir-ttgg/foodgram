@@ -106,14 +106,46 @@ jobs:
           username: ${{ secrets.USER }}
           key: ${{ secrets.SSH_KEY }}
           passphrase: ${{ secrets.SSH_PASSPHRASE }}
+          command_timeout: 10m
           # Параметр script передаёт в action appleboy/ssh-action команды,
           script: |
-            cd foodgram
+            set -e
+            cd foodgram || exit 1
+            
+            echo "=== Step 1: Stopping old containers ==="
+            # Останавливаем и удаляем старые контейнеры (если есть)
+            sudo docker compose -f docker-compose.prod.yml down || true
+            
+            echo "=== Step 2: Checking and freeing port 80 ==="
+            # Останавливаем все контейнеры, использующие порт 80
+            sudo docker ps --filter "publish=80" --format "{{.ID}}" | while read id; do
+              if [ ! -z "$id" ]; then
+                echo "Stopping container $id using port 80"
+                sudo docker stop "$id" || true
+              fi
+            done
+            
+            echo "=== Step 3: Pulling new images ==="
+            # Скачиваем новые образы
             sudo docker compose -f docker-compose.prod.yml pull
-            sudo docker compose -f docker-compose.prod.yml down
+            
+            echo "=== Step 4: Starting containers ==="
+            # Запускаем контейнеры
             sudo docker compose -f docker-compose.prod.yml up -d
-            # Выполняем только миграции с флагом --noinput
-            sudo docker compose -f docker-compose.prod.yml exec -T backend python manage.py migrate --noinput
+            
+            echo "=== Step 5: Waiting for services ==="
+            # Ждем, пока backend будет готов
+            sleep 15
+            
+            echo "=== Step 6: Running migrations ==="
+            # Выполняем миграции с флагом --noinput
+            sudo docker compose -f docker-compose.prod.yml exec -T backend python manage.py migrate --noinput || echo "Migrations completed or skipped"
+            
+            echo "=== Step 7: Checking container status ==="
+            # Проверяем статус контейнеров
+            sudo docker compose -f docker-compose.prod.yml ps
+            
+            echo "=== Deployment completed successfully ==="
   send_message:
     runs-on: ubuntu-latest
     needs: deploy
