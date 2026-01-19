@@ -19,7 +19,8 @@ from .filters import RecipeFilter
 from .permissions import IsAuthorOrReadOnly
 from .serializers import (IngredientSerializer, RecipeSerializer,
                           RecipeShortSerializer, SubscriptionSerializer,
-                          TagSerializer, UserAvatarSerializer, UserSerializer)
+                          TagSerializer, UserAvatarSerializer,
+                          UserRegistrationSerializer, UserSerializer)
 
 User = get_user_model()
 
@@ -27,6 +28,12 @@ User = get_user_model()
 class UserViewSet(DjoserUserViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
+
+    def get_serializer_class(self):
+        """Переопределяем для использования UserRegistrationSerializer при создании"""
+        if self.action == 'create':
+            return UserRegistrationSerializer
+        return super().get_serializer_class()
 
     def get_permissions(self):
         if self.action in ['list', 'retrieve', 'create']:

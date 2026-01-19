@@ -197,6 +197,15 @@ class UserRegistrationSerializer(DjoserUserCreateSerializer):
         if not re.match(r'^[\w.@+-]+$', value):
             raise serializers.ValidationError(
                 'Некорректный формат имени пользователя')
+        return value
+
+    def create(self, validated_data):
+        """Создаем пользователя с явной передачей username"""
+        password = validated_data.pop('password')
+        user = User.objects.create_user(**validated_data)
+        user.set_password(password)
+        user.save()
+        return user
 
 
 class RecipeShortSerializer(serializers.ModelSerializer):
