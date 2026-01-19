@@ -89,7 +89,7 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v3
 
-      - name: Copy docker-compose.yml via ssh
+      - name: Copy docker-compose.prod.yml via ssh
         uses: appleboy/scp-action@master
       # Передаём параметры для action appleboy/scp-action:
         with:
@@ -97,7 +97,7 @@ jobs:
           username: ${{ secrets.USER }}
           key: ${{ secrets.SSH_KEY }}
           passphrase: ${{ secrets.SSH_PASSPHRASE }}
-          source: "docker-compose.yml"
+          source: "docker-compose.prod.yml"
           target: "foodgram"
       - name: Executing remote ssh commands to deploy
         uses: appleboy/ssh-action@master
@@ -109,11 +109,11 @@ jobs:
           # Параметр script передаёт в action appleboy/ssh-action команды,
           script: |
             cd foodgram
-            sudo docker compose -f docker-compose.yml pull
-            sudo docker compose -f docker-compose.yml down
-            sudo docker compose -f docker-compose.yml up -d
+            sudo docker compose -f docker-compose.prod.yml pull
+            sudo docker compose -f docker-compose.prod.yml down
+            sudo docker compose -f docker-compose.prod.yml up -d
             # Выполняем только миграции с флагом --noinput
-            sudo docker compose -f docker-compose.yml exec -T backend python manage.py migrate --noinput
+            sudo docker compose -f docker-compose.prod.yml exec -T backend python manage.py migrate --noinput
   send_message:
     runs-on: ubuntu-latest
     needs: deploy
