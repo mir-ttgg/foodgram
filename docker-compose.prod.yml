@@ -30,12 +30,13 @@ services:
              python manage.py collectstatic --noinput &&
              python manage.py load_ingredients --path food/data/ingredients.json &&
              gunicorn --bind 0.0.0.0:8000 --workers 3 foodgram.wsgi:application"
-
+    platform: linux/amd64
   frontend:
     container_name: foodgram-frontend
     image: mirttgg/foodgram_frontend:latest
     volumes:
       - static_volume:/app/staticfiles
+    platform: linux/amd64
 
   nginx:
     container_name: foodgram-nginx
@@ -48,6 +49,7 @@ services:
     depends_on:
       - backend
       - frontend
+    platform: linux/amd64
 
 volumes:
   postgres_data:

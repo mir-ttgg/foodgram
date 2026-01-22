@@ -91,7 +91,7 @@ USE_TZ = True
 
 
 STATIC_URL = '/static/'
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
@@ -114,7 +114,6 @@ DJOSER = {
     'LOGIN_FIELD': 'email',
     'USER_ID_FIELD': 'id',
     'SERIALIZERS': {
-        # Свой сериализатор регистрации
         'user_create': 'api.serializers.UserRegistrationSerializer',
         'current_user': 'api.serializers.UserSerializer',
     },
