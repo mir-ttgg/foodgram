@@ -50,7 +50,7 @@ services:
       - backend
       - frontend
     platform: linux/amd64
-
+#
 volumes:
   postgres_data:
   static_volume:
