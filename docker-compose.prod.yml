@@ -7,14 +7,14 @@ services:
       - ./.env
 
   frontend:
-   image: krivse/foodgram-frontend:v1.1
+   image: mirttgg/foodgram-frontend:v1.1
    volumes:
      - ../frontend/:/app/result_build/
    depends_on:
       - db
 
   web:
-    image: krivse/foodgram-backend:v1.4
+    image: mirttgg/foodgram-backend:v1.4
     restart: always
     volumes:
       - static_value:/app/static/
