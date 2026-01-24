@@ -30,23 +30,24 @@ services:
              python manage.py collectstatic --noinput &&
              python manage.py load_ingredients --path food/data/ingredients.json &&
              gunicorn --bind 0.0.0.0:8000 --workers 3 foodgram.wsgi:application"
-    platform: linux/amd64
     healthcheck:
-    test: ["CMD-SHELL", "python manage.py shell -c 'import sys; from django.db import connection; sys.exit(0) if connection.is_usable() else sys.exit(1)'"]
-    interval: 15s
-    timeout: 5s
-    retries: 5
+      test: ["CMD-SHELL", "python manage.py shell -c 'import sys; from django.db import connection; sys.exit(0) if connection.is_usable() else sys.exit(1)'"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+    platform: linux/amd64
   frontend:
     container_name: foodgram-frontend
     image: mirttgg/foodgram_frontend:latest
     volumes:
       - static_volume:/app/staticfiles
-    platform: linux/amd64
     healthcheck:
-    test: ["CMD", "curl", "-f", "http://localhost:3000"]
-    interval: 15s
-    timeout: 5s
-    retries: 5
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+    platform: linux/amd64
+
 
   nginx:
     container_name: foodgram-nginx
