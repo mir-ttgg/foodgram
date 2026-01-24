@@ -7,14 +7,14 @@ services:
       - ./.env
 
   frontend:
-   image: mirttgg/foodgram-frontend:v1.1
+   image: mirttgg/foodgram-frontend:latest
    volumes:
      - ../frontend/:/app/result_build/
    depends_on:
       - db
 
   web:
-    image: mirttgg/foodgram-backend:v1.4
+    image: mirttgg/foodgram-backend:latest
     restart: always
     volumes:
       - static_value:/app/static/
@@ -26,7 +26,7 @@ services:
       - ./.env
 
   nginx:
-    image: nginx:1.19.3
+    image: mirttgg/foodgram_nginx:latest
     ports:
       - "80:80"
     volumes:
