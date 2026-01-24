@@ -7,14 +7,14 @@ services:
       - ./.env
 
   frontend:
-   image: mirttgg/foodgram-frontend:latest
+   image: mirttgg/foodgram_frontend:latest
    volumes:
      - ../frontend/:/app/result_build/
    depends_on:
       - db
 
   web:
-    image: mirttgg/foodgram-backend:latest
+    image: mirttgg/foodgram_backend:latest
     restart: always
     volumes:
       - static_value:/app/static/
