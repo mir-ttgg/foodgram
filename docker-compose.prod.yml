@@ -1,70 +1,45 @@
 services:
-
   db:
-    container_name: foodgram-db
-    image: postgres:15-alpine
+    image: postgres:13.0-alpine
     volumes:
-      - postgres_data:/var/lib/postgresql/data/
+      - db_data:/var/lib/postgresql/data/
     env_file:
-      - .env
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+      - ./.env
 
-  backend:
-    container_name: foodgram-backend
-    image: mirttgg/foodgram_backend:latest
-    volumes:
-      - static_volume:/app/staticfiles
-      - media_volume:/app/media
-    env_file:
-      - .env
-    depends_on:
-      db:
-        condition: service_healthy
-    command: >
-      sh -c "python manage.py makemigrations --noinput &&
-             python manage.py migrate &&
-             python manage.py collectstatic --noinput &&
-             python manage.py load_ingredients --path food/data/ingredients.json &&
-             gunicorn --bind 0.0.0.0:8000 --workers 3 foodgram.wsgi:application"
-    healthcheck:
-      test: ["CMD-SHELL", "python manage.py shell -c 'import sys; from django.db import connection; sys.exit(0) if connection.is_usable() else sys.exit(1)'"]
-      interval: 15s
-      timeout: 5s
-      retries: 5
-    platform: linux/amd64
   frontend:
-    container_name: foodgram-frontend
-    image: mirttgg/foodgram_frontend:latest
-    volumes:
-      - static_volume:/app/staticfiles
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000"]
-      interval: 15s
-      timeout: 5s
-      retries: 5
-    platform: linux/amd64
+   image: krivse/foodgram-frontend:v1.1
+   volumes:
+     - ../frontend/:/app/result_build/
+   depends_on:
+      - db
 
+  web:
+    image: krivse/foodgram-backend:v1.4
+    restart: always
+    volumes:
+      - static_value:/app/static/
+      - media_value:/app/media/
+      - redoc:/app/api/docs/
+    depends_on:
+      - frontend
+    env_file:
+      - ./.env
 
   nginx:
-    container_name: foodgram-nginx
-    image: mirttgg/foodgram_nginx:latest
+    image: nginx:1.19.3
     ports:
       - "80:80"
     volumes:
-      - static_volume:/staticfiles/
-      - media_volume:/media/
-  depends_on:
-    backend:
-      condition: service_healthy
-    frontend:
-      condition: service_healthy
-    platform: linux/amd64
-#
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf
+      - static_value:/var/html/static/
+      - media_value:/var/html/media/
+      - ../frontend/build:/usr/share/nginx/html/
+      - redoc:/usr/share/nginx/html/api/docs/
+    depends_on:
+      - web
+
 volumes:
-  postgres_data:
-  static_volume:
-  media_volume:
+  static_value:
+  media_value:
+  db_data:
+  redoc:
