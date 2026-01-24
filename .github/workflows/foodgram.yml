@@ -75,7 +75,7 @@ jobs:
       - name: Push to DockerHub
         uses: docker/build-push-action@v4
         with:
-          context: ./nginx/
+          context: ./infra/
           push: true
           tags: mirttgg/foodgram_nginx:latest
   deploy:
