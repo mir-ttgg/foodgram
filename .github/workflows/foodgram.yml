@@ -88,7 +88,6 @@ jobs:
       - build_frontend_and_push_to_docker_hub
       - build_nginx_and_push_to_docker_hub
     steps:
-      # Шаг 1: Скачиваем код из репозитория
       - name: Check out the repo
         uses: actions/checkout@v3
 
