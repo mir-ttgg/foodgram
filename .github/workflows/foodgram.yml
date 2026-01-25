@@ -11,9 +11,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out the repo
-        # Получение исходного кода из репозитория
+
         uses: actions/checkout@v3
-      - name: Show repository file structure # <--- ДОБАВЬТЕ ЭТОТ ШАГ
+      - name: Show repository file structure 
         run: ls -R
       - name: Set up Docker Buildx
         # Установка сборщика контейнеров Docker

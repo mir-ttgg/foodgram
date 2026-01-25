@@ -33,7 +33,7 @@ services:
       - backend
 
   db:
-    image: postgres:13.0-alpine
+    image: postgres:16-alpine
     restart: always
     volumes:
       - db_value:/var/lib/postgresql/data/
