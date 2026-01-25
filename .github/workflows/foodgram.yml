@@ -34,13 +34,9 @@ jobs:
           # Параметр context: ./backend/ указывает, что нужный Dockerfile
           # находится в ./backend/
           context: ./backend/
-          # Параметр push: true указывает, что образ нужно не только собрать,
-          # но и отправить на Docker Hub
+
           push: true
-          # В параметре tags задаётся название и тег для образа.
-          # Для каждого пересобранного образа
-          # устанавливаем тег latest, чтобы потом
-          # на сервере и в docker-compose.yml не указывать версию
+
           tags: mirttgg/foodgram_backend:latest
   build_frontend_and_push_to_docker_hub:
     name: Push frontend Docker image to DockerHub
@@ -101,7 +97,6 @@ jobs:
           source: "infra/,.env" # Копируем папку infra и файл .env
           target: "foodgram"
 
-
       # Шаг 3: ЗАПУСКАЕМ КОМАНДЫ НА СЕРВЕРЕ, указывая правильные пути
       - name: Executing remote ssh commands to deploy
         uses: appleboy/ssh-action@master
@@ -110,29 +105,28 @@ jobs:
           username: ${{ secrets.USER }}
           key: ${{ secrets.SSH_KEY }}
           passphrase: ${{ secrets.SSH_PASSPHRASE }}
-          script: |
-            set -e
-            cd foodgram
-            echo "=== Starting deployment on server ==="
+        script: |
+          set -e
+          cd foodgram
+          echo "=== Starting deployment on server ==="
 
-            # ВАЖНО: Теперь мы указываем путь к файлу ВНУТРИ папки infra
-            sudo docker compose -f infra/docker-compose.prod.yml down || true
-            
-            sudo docker compose -f infra/docker-compose.prod.yml pull
-            
-            sudo docker compose -f infra/docker-compose.prod.yml up -d
-            
-            echo "Waiting for services to start..."
-            sleep 15
-            sudo docker compose -f infra/docker-compose.prod.yml exec -T backend python manage.py collectstatic --noinput
-            sudo docker compose -f infra/docker-compose.prod.yml exec -T backend python manage.py migrate --noinput docker compose -f infra/docker-compose.prod.yml exec -T backend python manage.py migrate --noinput
-            
-            echo "--- Checking container status ---"
-            sudo docker compose -f infra/docker-compose.prod.yml ps
-            
-            echo "=== Deployment completed successfully ==="
+          # Указываем путь к файлу ВНУТРИ папки infra
+          sudo docker compose -f infra/docker-compose.prod.yml down || true
+          sudo docker compose -f infra/docker-compose.prod.yml pull
+          sudo docker compose -f infra/docker-compose.prod.yml up -d
 
+          echo "Waiting for services to start..."
+          sleep 15
 
+          # Собираем статику
+          sudo docker compose -f infra/docker-compose.prod.yml exec -T backend python manage.py collectstatic --noinput
+
+          # Применяем миграции (теперь команда правильная)
+          sudo docker compose -f infra/docker-compose.prod.yml exec -T backend python manage.py migrate --noinput
+
+          echo "--- Checking container status ---"
+          sudo docker compose -f infra/docker-compose.prod.yml ps
+          echo "=== Deployment completed successfully ==="
 
   send_message:
     runs-on: ubuntu-latest
