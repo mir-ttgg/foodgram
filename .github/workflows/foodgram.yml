@@ -88,20 +88,17 @@ jobs:
       - build_frontend_and_push_to_docker_hub
       - build_nginx_and_push_to_docker_hub
     steps:
-      - name: Checkout repo
+      - name: Check out the repo
         uses: actions/checkout@v3
 
-      - name: Copy deployment files via ssh
-        uses: appleboy/scp-action@master
-        with:
-          host: ${{ secrets.HOST }}
-          username: ${{ secrets.USER }}
-          key: ${{ secrets.SSH_KEY }}
-          passphrase: ${{ secrets.SSH_PASSPHRASE }}
-          source: |
-            infra/docker-compose.prod.yml
-            infra/nginx.conf
-          target: "foodgram"
+      - name: DEBUG 1 - Show current working directory
+        run: pwd
+
+      - name: DEBUG 2 - List all files recursively from the root
+        run: ls -R
+
+      - name: DEBUG 3 - List ONLY the contents of the 'infra' directory
+        run: ls -l infra/
 
       - name: Executing remote ssh commands to deploy
         uses: appleboy/ssh-action@master
