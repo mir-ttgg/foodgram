@@ -92,7 +92,6 @@ jobs:
       - name: Check out the repo
         uses: actions/checkout@v3
 
-      # Шаг 2: Копируем ВСЮ папку infra на твой сервер
       - name: Copy 'infra' directory to server
         uses: appleboy/scp-action@master
         with:
