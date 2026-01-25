@@ -105,28 +105,28 @@ jobs:
           username: ${{ secrets.USER }}
           key: ${{ secrets.SSH_KEY }}
           passphrase: ${{ secrets.SSH_PASSPHRASE }}
-        script: |
-          set -e
-          cd foodgram
-          echo "=== Starting deployment on server ==="
+          script: |
+            set -e
+            cd foodgram
+            echo "=== Starting deployment on server ==="
 
-          # Указываем путь к файлу ВНУТРИ папки infra
-          sudo docker compose -f infra/docker-compose.prod.yml down || true
-          sudo docker compose -f infra/docker-compose.prod.yml pull
-          sudo docker compose -f infra/docker-compose.prod.yml up -d
+            # Указываем путь к файлу ВНУТРИ папки infra
+            sudo docker compose -f infra/docker-compose.prod.yml down || true
+            sudo docker compose -f infra/docker-compose.prod.yml pull
+            sudo docker compose -f infra/docker-compose.prod.yml up -d
 
-          echo "Waiting for services to start..."
-          sleep 15
+            echo "Waiting for services to start..."
+            sleep 15
 
-          # Собираем статику
-          sudo docker compose -f infra/docker-compose.prod.yml exec -T backend python manage.py collectstatic --noinput
+            # Собираем статику
+            sudo docker compose -f infra/docker-compose.prod.yml exec -T backend python manage.py collectstatic --noinput
 
-          # Применяем миграции (теперь команда правильная)
-          sudo docker compose -f infra/docker-compose.prod.yml exec -T backend python manage.py migrate --noinput
+            # Применяем миграции (теперь команда правильная)
+            sudo docker compose -f infra/docker-compose.prod.yml exec -T backend python manage.py migrate --noinput
 
-          echo "--- Checking container status ---"
-          sudo docker compose -f infra/docker-compose.prod.yml ps
-          echo "=== Deployment completed successfully ==="
+            echo "--- Checking container status ---"
+            sudo docker compose -f infra/docker-compose.prod.yml ps
+            echo "=== Deployment completed successfully ==="
 
   send_message:
     runs-on: ubuntu-latest
