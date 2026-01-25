@@ -6,7 +6,8 @@ services:
       - static_value:/app/staticfiles/
       - media_value:/app/media/
     depends_on:
-      - db
+      - db:
+          condition: service_healthy
     env_file:
       - ./.env
 
@@ -39,6 +40,12 @@ services:
       - db_value:/var/lib/postgresql/data/
     env_file:
       - ./.env
+    healthcheck:
+      # Эта команда проверяет, готова ли база данных принимать подключения
+      test: ["CMD-SHELL", "pg_isready -U ${{POSTGRES_USER}} -d ${{POSTGRES_DB}}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
 volumes:
   static_value:
