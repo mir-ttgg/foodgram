@@ -88,23 +88,41 @@ jobs:
       - build_frontend_and_push_to_docker_hub
       - build_nginx_and_push_to_docker_hub
     steps:
-      - name: 1. Скачиваем код
+      # Шаг 1: Скачиваем код
+      - name: Check out the repo
         uses: actions/checkout@v3
 
-      - name: 2. Показываем, что в папке infra
-        run: |
-          echo "Содержимое папки infra:"
-          ls -l infra/
-
-      - name: 3. ПРОБУЕМ СКОПИРОВАТЬ ТОЛЬКО ОДИН ФАЙЛ
+      # Шаг 2: Копируем файлы, используя новый синтаксис (запятая как разделитель)
+      - name: Copy deployment files to server
         uses: appleboy/scp-action@master
         with:
           host: ${{ secrets.HOST }}
           username: ${{ secrets.USER }}
           key: ${{ secrets.SSH_KEY }}
           passphrase: ${{ secrets.SSH_PASSPHRASE }}
-          source: "infra/docker-compose.prod.yml" # <--- ТОЛЬКО ОДИН ФАЙЛ. БЕЗ ВСЯКИХ "|".
+          source: "infra/docker-compose.prod.yml,infra/nginx.conf" # <-- ВАЖНО: Файлы через запятую, в одной строке
           target: "foodgram"
+
+      # Шаг 3: Выполняем скрипт на сервере
+      - name: Executing remote ssh commands to deploy
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USER }}
+          key: ${{ secrets.SSH_KEY }}
+          passphrase: ${{ secrets.SSH_PASSPHRASE }}
+          script: |
+            set -e
+            cd foodgram
+            echo "=== Starting deployment on server ==="
+            sudo docker compose -f docker-compose.prod.yml down || true
+            sudo docker compose -f docker-compose.prod.yml pull
+            sudo docker compose -f docker-compose.prod.yml up -d
+            sleep 15
+            sudo docker compose -f docker-compose.prod.yml exec -T backend python manage.py migrate --noinput
+            sudo docker compose -f docker-compose.prod.yml ps
+            echo "=== Deployment completed ==="
+
 
   send_message:
     runs-on: ubuntu-latest
