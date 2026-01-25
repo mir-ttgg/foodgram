@@ -87,52 +87,24 @@ jobs:
       - build_and_push_to_docker_hub
       - build_frontend_and_push_to_docker_hub
       - build_nginx_and_push_to_docker_hub
-    steps:
-      # Шаг 1: Скачиваем код из репозитория
-      - name: Check out the repo
+        steps:
+      - name: 1. Скачиваем код
         uses: actions/checkout@v3
 
-      # Шаг 2: КОПИРУЕМ НУЖНЫЕ ФАЙЛЫ НА ТВОЙ СЕРВЕР
-      - name: Copy deployment files to server
+      - name: 2. Показываем, что в папке infra
+        run: |
+          echo "Содержимое папки infra:"
+          ls -l infra/
+
+      - name: 3. ПРОБУЕМ СКОПИРОВАТЬ ТОЛЬКО ОДИН ФАЙЛ
         uses: appleboy/scp-action@master
         with:
           host: ${{ secrets.HOST }}
           username: ${{ secrets.USER }}
           key: ${{ secrets.SSH_KEY }}
           passphrase: ${{ secrets.SSH_PASSPHRASE }}
-          source: | # <--- Этот символ важен!
-            infra/docker-compose.prod.yml
-            infra/nginx.conf
+          source: "infra/docker-compose.prod.yml" # <--- ТОЛЬКО ОДИН ФАЙЛ. БЕЗ ВСЯКИХ "|".
           target: "foodgram"
-
-      # Шаг 3: ЗАПУСКАЕМ КОМАНДЫ НА СЕРВЕРЕ, ИСПОЛЬЗУЯ СКОПИРОВАННЫЕ ФАЙЛЫ
-      - name: Executing remote ssh commands to deploy
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ secrets.HOST }}
-          username: ${{ secrets.USER }}
-          key: ${{ secrets.SSH_KEY }}
-          passphrase: ${{ secrets.SSH_PASSPHRASE }}
-          script: |
-            set -e
-            cd foodgram
-            echo "=== Step 1: Stopping old containers ==="
-            sudo docker compose -f docker-compose.prod.yml down || true
-            
-            echo "=== Step 2: Pulling new images ==="
-            sudo docker compose -f docker-compose.prod.yml pull
-            
-            echo "=== Step 3: Starting containers ==="
-            sudo docker compose -f docker-compose.prod.yml up -d
-            
-            echo "=== Step 4: Running migrations ==="
-            sleep 15
-            sudo docker compose -f docker-compose.prod.yml exec -T backend python manage.py migrate --noinput
-            
-            echo "=== Step 5: Checking container status ==="
-            sudo docker compose -f docker-compose.prod.yml ps
-            
-            echo "=== Deployment completed successfully ==="
 
   send_message:
     runs-on: ubuntu-latest
