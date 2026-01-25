@@ -82,7 +82,7 @@ jobs:
           tags: mirttgg/foodgram_nginx:latest
   deploy:
     runs-on: ubuntu-latest
-    needs: 
+    needs:
       # Дождёмся билда всех образов Taski
       - build_and_push_to_docker_hub
       - build_frontend_and_push_to_docker_hub
@@ -91,9 +91,8 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v3
 
-      - name: Copy docker-compose.prod.yml via ssh
+      - name: Copy deployment files via ssh
         uses: appleboy/scp-action@master
-      # Передаём параметры для action appleboy/scp-action:
         with:
           host: ${{ secrets.HOST }}
           username: ${{ secrets.USER }}
@@ -103,6 +102,7 @@ jobs:
             infra/docker-compose.prod.yml
             infra/nginx.conf
           target: "foodgram"
+
       - name: Executing remote ssh commands to deploy
         uses: appleboy/ssh-action@master
         with:
@@ -115,11 +115,11 @@ jobs:
           script: |
             set -e
             cd foodgram || exit 1
-            
+
             echo "=== Step 1: Stopping old containers ==="
             # Останавливаем и удаляем старые контейнеры (если есть)
             sudo docker compose -f docker-compose.prod.yml down || true
-            
+
             echo "=== Step 2: Checking and freeing port 80 ==="
             # Останавливаем все контейнеры, использующие порт 80
             sudo docker ps --filter "publish=80" --format "{{.ID}}" | while read id; do
@@ -128,37 +128,35 @@ jobs:
                 sudo docker stop "$id" || true
               fi
             done
-            
+
             echo "=== Step 3: Pulling new images ==="
             # Скачиваем новые образы
             sudo docker compose -f docker-compose.prod.yml pull
-            
+
             echo "=== Step 4: Starting containers ==="
             # Запускаем контейнеры
             sudo docker compose -f docker-compose.prod.yml up -d
-            
+
             echo "=== Step 5: Waiting for services ==="
             # Ждем, пока backend будет готов
             sleep 15
-            
+
             echo "=== Step 6: Running migrations ==="
             # Выполняем миграции с флагом --noinput
             sudo docker compose -f docker-compose.prod.yml exec -T backend python manage.py migrate --noinput || echo "Migrations completed or skipped"
-            
+
             echo "=== Step 7: Checking container status ==="
             # Проверяем статус контейнеров
             sudo docker compose -f docker-compose.prod.yml ps
-            
+
             echo "=== Deployment completed successfully ==="
   send_message:
     runs-on: ubuntu-latest
     needs: deploy
     steps:
-    - name: Send message
-      uses: appleboy/telegram-action@master
-      with:
-        to: ${{ secrets.TELEGRAM_TO }}
-        token: ${{ secrets.TELEGRAM_TOKEN }}
-        message: Деплой успешно выполнен!
-
-
+      - name: Send message
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TELEGRAM_TO }}
+          token: ${{ secrets.TELEGRAM_TOKEN }}
+          message: Деплой успешно выполнен!
