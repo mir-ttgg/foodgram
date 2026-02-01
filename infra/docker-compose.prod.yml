@@ -22,13 +22,9 @@ services:
     ports:
       - "80:80"
     volumes:
-      # СТАРЫЙ, НЕПРАВИЛЬНЫЙ ПУТЬ: - ./frontend_build:/usr/share/nginx/html/
-      # Так как у нас нет сбилженного фронтенда на сервере, а он внутри образа nginx,
-      # нам нужно монтировать только статику Django и сам конфиг Nginx.
-      # Папка с фронтендом уже "запечена" в образ mirttgg/foodgram_nginx:latest
       - static_value:/var/html/static/
       - media_value:/var/html/media/
-      - ./nginx.conf:/etc/nginx/conf.d/default.conf # <-- ИСПРАВЛЕНО
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf
     depends_on:
       - backend
 
@@ -40,4 +36,4 @@ services:
 volumes:
   static_value:
   media_value:
-  db_value:
+  pg_data: 
