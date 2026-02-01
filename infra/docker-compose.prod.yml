@@ -9,12 +9,10 @@ services:
       - db
     env_file:
       - ./.env
-
-  # frontend-образ больше не нужен в docker-compose, так как nginx его заменяет
-  # frontend:
-  #   image: mirttgg/foodgram_frontend:latest
-  #   volumes:
-  #     - ./frontend_build:/usr/share/nginx/html/
+  frontend:
+    image: mirttgg/foodgram_frontend:latest
+    volumes:
+      - ./frontend_build:/usr/share/nginx/html/
 
   nginx:
     image: mirttgg/foodgram_nginx:latest
