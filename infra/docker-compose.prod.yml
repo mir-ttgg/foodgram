@@ -9,6 +9,7 @@ services:
       - db
     env_file:
       - ./.env
+
   frontend:
     image: mirttgg/foodgram_frontend:latest
     volumes:
@@ -20,8 +21,8 @@ services:
     ports:
       - "80:80"
     volumes:
-      - static_value:/var/html/static/
-      - media_value:/var/html/media/
+      - static_value:/app/staticfiles/
+      - media_value:/app/media/
       - ./nginx.conf:/etc/nginx/conf.d/default.conf
     depends_on:
       - backend
@@ -31,7 +32,8 @@ services:
     env_file: .env
     volumes:
       - pg_data:/var/lib/postgresql/data
+
 volumes:
   static_value:
   media_value:
-  pg_data: 
+  pg_data:
