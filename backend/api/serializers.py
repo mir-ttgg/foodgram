@@ -28,16 +28,14 @@ class UserSerializer(serializers.ModelSerializer):
         if not request or request.user.is_anonymous:
             return False
         return Follow.objects.filter(
-            follower=request.user,
-            following=obj
+            follower=request.user, following=obj
         ).exists()
 
     class Meta:
         model = User
         fields = ['id', 'username', 'email',
-                  'first_name', 'last_name', 'password',
+                  'first_name', 'last_name',
                   'is_subscribed', 'avatar']
-        extra_kwargs = {'password': {'write_only': True}}
 
 
 class IngredientSerializer(serializers.ModelSerializer):
@@ -53,27 +51,25 @@ class TagSerializer(serializers.ModelSerializer):
 
 
 class RecipeIngredientSerializer(serializers.ModelSerializer):
+    """Сериализатор для отображения ингредиентов в рецепте."""
     id = serializers.IntegerField(source='ingredient.id')
     name = serializers.CharField(source='ingredient.name')
-    measurement_unit = serializers.CharField(
-        source='ingredient.measurement_unit')
+    measurement_unit = serializers.CharField(source='ingredient.measurement_unit')
+    # Postman ожидает поле "amount", а не "quantity"
+    amount = serializers.FloatField(source='quantity')
 
     class Meta:
         model = RecipeIngredient
-        fields = ['id', 'name', 'measurement_unit', 'quantity']
+        fields = ['id', 'name', 'measurement_unit', 'amount']
 
 
 class RecipeSerializer(serializers.ModelSerializer):
     author = UserSerializer(read_only=True)
     tags = serializers.PrimaryKeyRelatedField(
-        queryset=Tag.objects.all(),
-        many=True,
-        allow_empty=False
+        queryset=Tag.objects.all(), many=True, allow_empty=False
     )
     ingredients = serializers.ListField(
-        child=serializers.DictField(),
-        write_only=True,
-        allow_empty=False
+        child=serializers.DictField(), write_only=True, allow_empty=False
     )
     image = Base64ImageField()
     is_favorited = serializers.SerializerMethodField()
@@ -81,8 +77,8 @@ class RecipeSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Recipe
-        fields = ['id', 'name', 'tags', 'author',
-                  'ingredients', 'image', 'text', 'cooking_time',
+        fields = ['id', 'name', 'tags', 'author', 'ingredients',
+                  'image', 'text', 'cooking_time',
                   'is_favorited', 'is_in_shopping_cart']
 
     def get_is_favorited(self, obj):
@@ -99,31 +95,25 @@ class RecipeSerializer(serializers.ModelSerializer):
 
     def validate_ingredients(self, value):
         if not value:
-            raise serializers.ValidationError(
-                "Ингредиенты не могут быть пустыми")
-
-        ingredients_list = []
+            raise serializers.ValidationError('Ингредиенты не могут быть пустыми')
+        ids = []
         for item in value:
             if 'id' not in item or 'amount' not in item:
                 raise serializers.ValidationError(
-                    "Каждый ингредиент должен содержать id и amount")
+                    'Каждый ингредиент должен содержать id и amount')
             if not Ingredient.objects.filter(id=item['id']).exists():
                 raise serializers.ValidationError(
                     f"Ингредиент с id {item['id']} не существует")
-            if item['id'] in ingredients_list:
-                raise serializers.ValidationError(
-                    "Ингредиенты не должны повторяться")
-            ingredients_list.append(item['id'])
+            if item['id'] in ids:
+                raise serializers.ValidationError('Ингредиенты не должны повторяться')
+            ids.append(item['id'])
             if int(item['amount']) < 1:
-                raise serializers.ValidationError(
-                    "Количество должно быть больше 0")
-
+                raise serializers.ValidationError('Количество должно быть больше 0')
         return value
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
-        representation['tags'] = TagSerializer(
-            instance.tags.all(), many=True).data
+        representation['tags'] = TagSerializer(instance.tags.all(), many=True).data
         representation['ingredients'] = RecipeIngredientSerializer(
             instance.recipe_ingredients.all(), many=True
         ).data
@@ -166,48 +156,47 @@ class SubscriptionSerializer(DjoserUserSerializer):
     recipes = serializers.SerializerMethodField()
     recipes_count = serializers.SerializerMethodField()
     is_subscribed = serializers.SerializerMethodField()
+    avatar = serializers.SerializerMethodField()
 
     class Meta(DjoserUserSerializer.Meta):
-        fields = DjoserUserSerializer.Meta.fields + \
-            ('recipes', 'recipes_count', 'is_subscribed')
+        fields = ['id', 'username', 'email', 'first_name', 'last_name',
+                  'is_subscribed', 'avatar', 'recipes', 'recipes_count']
 
     def get_is_subscribed(self, obj):
         return True
+
+    def get_avatar(self, obj):
+        request = self.context.get('request')
+        if obj.avatar and request:
+            return request.build_absolute_uri(obj.avatar.url)
+        return None
 
     def get_recipes_count(self, obj):
         return obj.recipes.count()
 
     def get_recipes(self, obj):
         request = self.context.get('request')
-        limit = request.query_params.get('recipes_limit')
+        limit = request.query_params.get('recipes_limit') if request else None
         queryset = obj.recipes.all()
         if limit:
             try:
                 queryset = queryset[:int(limit)]
             except ValueError:
                 pass
-        return RecipeShortSerializer(queryset, many=True).data
-
-
-class FollowSerializer(serializers.ModelSerializer):
-    follower = UserSerializer(read_only=True)
-    following = UserSerializer(read_only=True)
-
-    class Meta:
-        model = Follow
-        fields = ['id', 'follower', 'following']
+        return RecipeShortSerializer(queryset, many=True,
+                                     context={'request': request}).data
 
 
 class UserRegistrationSerializer(DjoserUserCreateSerializer):
+    """Postman ожидает только: id, username, first_name, last_name, email"""
     class Meta(DjoserUserCreateSerializer.Meta):
         model = User
-        fields = ['id', 'username', 'email', 'first_name',
-                  'last_name', 'password']
+        fields = ['id', 'username', 'email', 'first_name', 'last_name', 'password']
+        extra_kwargs = {'password': {'write_only': True}}
 
     def validate_username(self, value):
         if not re.match(r'^[\w.@+-]+$', value):
-            raise serializers.ValidationError(
-                'Некорректный формат имени пользователя')
+            raise serializers.ValidationError('Некорректный формат имени пользователя')
         return value
 
     def create(self, validated_data):
@@ -216,6 +205,15 @@ class UserRegistrationSerializer(DjoserUserCreateSerializer):
         user.set_password(password)
         user.save()
         return user
+
+    def to_representation(self, instance):
+        return {
+            'id': instance.id,
+            'username': instance.username,
+            'first_name': instance.first_name,
+            'last_name': instance.last_name,
+            'email': instance.email,
+        }
 
 
 class RecipeShortSerializer(serializers.ModelSerializer):
