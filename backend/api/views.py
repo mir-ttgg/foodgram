@@ -169,7 +169,8 @@ class RecipeViewSet(viewsets.ModelViewSet):
         ]
         for item in ingredients:
             shopping_list.append(
-                f'{item["ingredient__name"]} ({item["ingredient__measurement_unit"]}) — {item["total_amount"]}\n'
+                f'{item["ingredient__name"]}',
+                f'({item["ingredient__measurement_unit"]}) — {item["total_amount"]}\n'
             )
         shopping_list.append('\n\nСформировано в Foodgram')
 

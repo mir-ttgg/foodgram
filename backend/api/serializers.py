@@ -54,7 +54,8 @@ class RecipeIngredientSerializer(serializers.ModelSerializer):
     """Сериализатор для отображения ингредиентов в рецепте."""
     id = serializers.IntegerField(source='ingredient.id')
     name = serializers.CharField(source='ingredient.name')
-    measurement_unit = serializers.CharField(source='ingredient.measurement_unit')
+    measurement_unit = serializers.CharField(
+        source='ingredient.measurement_unit')
     # Postman ожидает поле "amount", а не "quantity"
     amount = serializers.FloatField(source='quantity')
 
@@ -95,7 +96,8 @@ class RecipeSerializer(serializers.ModelSerializer):
 
     def validate_ingredients(self, value):
         if not value:
-            raise serializers.ValidationError('Ингредиенты не могут быть пустыми')
+            raise serializers.ValidationError(
+                'Ингредиенты не могут быть пустыми')
         ids = []
         for item in value:
             if 'id' not in item or 'amount' not in item:
@@ -105,15 +107,18 @@ class RecipeSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError(
                     f"Ингредиент с id {item['id']} не существует")
             if item['id'] in ids:
-                raise serializers.ValidationError('Ингредиенты не должны повторяться')
+                raise serializers.ValidationError(
+                    'Ингредиенты не должны повторяться')
             ids.append(item['id'])
             if int(item['amount']) < 1:
-                raise serializers.ValidationError('Количество должно быть больше 0')
+                raise serializers.ValidationError(
+                    'Количество должно быть больше 0')
         return value
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
-        representation['tags'] = TagSerializer(instance.tags.all(), many=True).data
+        representation['tags'] = TagSerializer(
+            instance.tags.all(), many=True).data
         representation['ingredients'] = RecipeIngredientSerializer(
             instance.recipe_ingredients.all(), many=True
         ).data
@@ -191,12 +196,14 @@ class UserRegistrationSerializer(DjoserUserCreateSerializer):
     """Postman ожидает только: id, username, first_name, last_name, email"""
     class Meta(DjoserUserCreateSerializer.Meta):
         model = User
-        fields = ['id', 'username', 'email', 'first_name', 'last_name', 'password']
+        fields = ['id', 'username', 'email',
+                  'first_name', 'last_name', 'password']
         extra_kwargs = {'password': {'write_only': True}}
 
     def validate_username(self, value):
         if not re.match(r'^[\w.@+-]+$', value):
-            raise serializers.ValidationError('Некорректный формат имени пользователя')
+            raise serializers.ValidationError(
+                'Некорректный формат имени пользователя')
         return value
 
     def create(self, validated_data):
