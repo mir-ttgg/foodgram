@@ -169,13 +169,15 @@ class RecipeViewSet(viewsets.ModelViewSet):
         ]
         for item in ingredients:
             shopping_list.append(
-                f'{item["ingredient__name"]}',
-                f'({item["ingredient__measurement_unit"]}) — {item["total_amount"]}\n'
-            )
+                f'{item["ingredient__name"]}', (
+                    f'({item["ingredient__measurement_unit"]})',
+                    f'— {item["total_amount"]}\n'
+                ))
         shopping_list.append('\n\nСформировано в Foodgram')
 
         response = HttpResponse(shopping_list, content_type='text/plain')
-        response['Content-Disposition'] = 'attachment; filename=shopping_list.txt'
+        response['Content-Disposition'] = ('attachment; f'
+                                           'ilename=shopping_list.txt')
         return response
 
     @action(detail=True, methods=['post', 'delete'],
