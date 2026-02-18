@@ -163,7 +163,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
         shopping_list = [
             f'Список покупок для: {user.username}\n',
-            f'Дата: {datetime.now().strftime('%d-%m-%Y')}\n\n',
+            f'Дата: {datetime.now().strftime("%d-%m-%Y")}\n\n',
         ]
         for item in ingredients:
             shopping_list.append(
