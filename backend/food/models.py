@@ -2,6 +2,12 @@ from django.contrib.auth.models import AbstractUser
 from django.core.validators import MinValueValidator
 from django.db import models
 
+LENGTH_NAME = 256
+LENGTH_UNIT = 20
+LENGTH_TAG = 32
+LENGTH_TITLE = 200
+LENGT_MEASUREMENT_UNIT = 50
+
 
 class User(AbstractUser):
     email = models.EmailField(unique=True, verbose_name='Электронная почта')
@@ -23,10 +29,10 @@ class User(AbstractUser):
 
 
 class Ingredient(models.Model):
-    name = models.CharField(max_length=200, unique=True,
+    name = models.CharField(max_length=LENGTH_NAME, unique=True,
                             verbose_name='Название ингредиента')
     measurement_unit = models.CharField(
-        max_length=50, verbose_name='Единица измерения')
+        max_length=LENGT_MEASUREMENT_UNIT, verbose_name='Единица измерения')
 
     class Meta:
         verbose_name = 'Ингредиент'
@@ -54,9 +60,9 @@ class Follow(models.Model):
 
 
 class Tag(models.Model):
-    name = models.CharField(max_length=32, unique=True,
+    name = models.CharField(max_length=LENGTH_TAG, unique=True,
                             verbose_name='Название тега')
-    slug = models.SlugField(max_length=32, unique=True,
+    slug = models.SlugField(max_length=LENGTH_TAG, unique=True,
                             verbose_name='Слаг тега')
 
     class Meta:
@@ -69,11 +75,12 @@ class Tag(models.Model):
 
 
 class Recipe(models.Model):
-    name = models.CharField(max_length=256, verbose_name='Название рецепта')
+    name = models.CharField(max_length=LENGTH_NAME,
+                            verbose_name='Название рецепта')
     author = models.ForeignKey(
         User, related_name='recipes', on_delete=models.CASCADE,
         verbose_name='Автор')
-    title = models.CharField(max_length=200, verbose_name='Название')
+    title = models.CharField(max_length=LENGTH_TITLE, verbose_name='Название')
     image = models.ImageField(upload_to='recipes/', verbose_name='Изображение')
     text = models.TextField('Описание')
     ingredients = models.ManyToManyField(
@@ -108,7 +115,7 @@ class RecipeIngredient(models.Model):
         Ingredient, on_delete=models.CASCADE, related_name='used_in_recipes',
         verbose_name='Ингредиент')
     quantity = models.FloatField('количество', default=1.0)
-    unit = models.CharField('единица', max_length=20,
+    unit = models.CharField('единица', max_length=LENGTH_UNIT,
                             default='г')
 
     class Meta:

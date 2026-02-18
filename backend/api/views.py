@@ -13,7 +13,7 @@ from rest_framework.permissions import (AllowAny, IsAuthenticated,
 from rest_framework.response import Response
 
 from food.models import (Favorite, Follow, Ingredient, Recipe,
-                         RecipeIngredient, ShoppingCart, Tag)
+                         RecipeIngredient, ShoppingCart, Tag, User)
 
 from .filters import RecipeFilter
 from .permissions import IsAuthorOrReadOnly
@@ -21,8 +21,6 @@ from .serializers import (IngredientSerializer, RecipeSerializer,
                           RecipeShortSerializer, SubscriptionSerializer,
                           TagSerializer, UserAvatarSerializer,
                           UserRegistrationSerializer, UserSerializer)
-
-User = get_user_model()
 
 
 class UserViewSet(DjoserUserViewSet):
@@ -120,7 +118,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['get'], url_path='get-link')
     def get_link(self, request, pk=None):
         get_object_or_404(Recipe, pk=pk)
-        short_link = f"http://{request.get_host()}/s/{pk}"
+        short_link = f'http://{request.get_host()}/s/{pk}'
         return Response({'short-link': short_link})
 
     @action(detail=True, methods=['post', 'delete'],
@@ -165,13 +163,13 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
         shopping_list = [
             f'Список покупок для: {user.username}\n',
-            f'Дата: {datetime.now().strftime("%d-%m-%Y")}\n\n',
+            f'Дата: {datetime.now().strftime('%d-%m-%Y')}\n\n',
         ]
         for item in ingredients:
             shopping_list.append(
-                f'{item["ingredient__name"]}', (
-                    f'({item["ingredient__measurement_unit"]})',
-                    f'— {item["total_amount"]}\n'
+                f'{item['ingredient__name']}', (
+                    f'({item['ingredient__measurement_unit']})',
+                    f'— {item['total_amount']}\n'
                 ))
         shopping_list.append('\n\nСформировано в Foodgram')
 

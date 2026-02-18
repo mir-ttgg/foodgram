@@ -1,15 +1,13 @@
 import re
 
 from django.contrib.auth import get_user_model
-from djoser.serializers import \
-    UserCreateSerializer as DjoserUserCreateSerializer
+from django.db import transaction
+from djoser.serializers import UserCreateSerializer as DjoserCreateSerializer
 from djoser.serializers import UserSerializer as DjoserUserSerializer
 from drf_extra_fields.fields import Base64ImageField
 from rest_framework import serializers
 
-from food.models import Follow, Ingredient, Recipe, RecipeIngredient, Tag
-
-User = get_user_model()
+from food.models import Follow, Ingredient, Recipe, RecipeIngredient, Tag, User
 
 
 class UserAvatarSerializer(serializers.ModelSerializer):
@@ -56,7 +54,6 @@ class RecipeIngredientSerializer(serializers.ModelSerializer):
     name = serializers.CharField(source='ingredient.name')
     measurement_unit = serializers.CharField(
         source='ingredient.measurement_unit')
-    # Postman ожидает поле "amount", а не "quantity"
     amount = serializers.FloatField(source='quantity')
 
     class Meta:
@@ -124,6 +121,7 @@ class RecipeSerializer(serializers.ModelSerializer):
         ).data
         return representation
 
+    @transaction.atomic
     def create(self, validated_data):
         ingredients = validated_data.pop('ingredients')
         tags = validated_data.pop('tags')
@@ -132,12 +130,11 @@ class RecipeSerializer(serializers.ModelSerializer):
         self._create_ingredients(recipe, ingredients)
         return recipe
 
+    @transaction.atomic
     def update(self, instance, validated_data):
         tags = validated_data.pop('tags', None)
         ingredients = validated_data.pop('ingredients', None)
-        for attr, value in validated_data.items():
-            setattr(instance, attr, value)
-        instance.save()
+        instance = super().update(instance, validated_data)
         if tags is not None:
             instance.tags.set(tags)
         if ingredients is not None:
@@ -192,9 +189,9 @@ class SubscriptionSerializer(DjoserUserSerializer):
                                      context={'request': request}).data
 
 
-class UserRegistrationSerializer(DjoserUserCreateSerializer):
+class UserRegistrationSerializer(DjoserCreateSerializer):
     """Postman ожидает только: id, username, first_name, last_name, email"""
-    class Meta(DjoserUserCreateSerializer.Meta):
+    class Meta(DjoserCreateSerializer.Meta):
         model = User
         fields = ['id', 'username', 'email',
                   'first_name', 'last_name', 'password']
@@ -206,6 +203,7 @@ class UserRegistrationSerializer(DjoserUserCreateSerializer):
                 'Некорректный формат имени пользователя')
         return value
 
+    @transaction.atomic
     def create(self, validated_data):
         password = validated_data.pop('password')
         user = User.objects.create_user(**validated_data)
