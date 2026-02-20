@@ -10,6 +10,7 @@ from rest_framework.decorators import action
 from rest_framework.permissions import (AllowAny, IsAuthenticated,
                                         IsAuthenticatedOrReadOnly)
 from rest_framework.response import Response
+from rest_framework.filters import SearchFilter
 
 from food.models import (Favorite, Follow, Ingredient, Recipe,
                          RecipeIngredient, ShoppingCart, Tag, User)
@@ -166,13 +167,13 @@ class RecipeViewSet(viewsets.ModelViewSet):
         ]
         for item in ingredients:
             shopping_list.append(
-                f'{item["ingredient__name"]}', (
-                    f'({item["ingredient__measurement_unit"]})',
-                    f'— {item["total_amount"]}\n'
-                ))
-        shopping_list.append('\n\nСформировано в Foodgram')
+                f'{item["ingredient__name"]} '
+                f'({item["ingredient__measurement_unit"]}) '
+                f'— {item["total_amount"]}\n'
+            )
 
-        response = HttpResponse(shopping_list, content_type='text/plain')
+        response = HttpResponse(''.join(shopping_list),
+                                content_type='text/plain')
         response['Content-Disposition'] = (
             'attachment; filename=shopping_list.txt')
         return response
@@ -209,3 +210,5 @@ class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = IngredientSerializer
     permission_classes = [AllowAny]
     pagination_class = None
+    filter_backends = [SearchFilter]
+    search_fields = ['^name']
