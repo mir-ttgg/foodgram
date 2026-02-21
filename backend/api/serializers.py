@@ -2,7 +2,6 @@ import re
 
 from django.db import transaction
 from djoser.serializers import UserCreateSerializer as DjoserCreateSerializer
-from djoser.serializers import UserSerializer as DjoserUserSerializer
 from drf_extra_fields.fields import Base64ImageField
 from rest_framework import serializers
 
@@ -153,13 +152,14 @@ class RecipeSerializer(serializers.ModelSerializer):
         RecipeIngredient.objects.bulk_create(objs)
 
 
-class SubscriptionSerializer(DjoserUserSerializer):
+class SubscriptionSerializer(serializers.ModelSerializer):
     recipes = serializers.SerializerMethodField()
     recipes_count = serializers.SerializerMethodField()
     is_subscribed = serializers.SerializerMethodField()
     avatar = serializers.SerializerMethodField()
 
-    class Meta(DjoserUserSerializer.Meta):
+    class Meta:
+        model = User
         fields = ['id', 'username', 'email', 'first_name', 'last_name',
                   'is_subscribed', 'avatar', 'recipes', 'recipes_count']
 
@@ -184,8 +184,9 @@ class SubscriptionSerializer(DjoserUserSerializer):
                 queryset = queryset[:int(limit)]
             except ValueError:
                 pass
-        return RecipeShortSerializer(queryset, many=True,
-                                     context={'request': request}).data
+        return RecipeShortSerializer(
+            queryset, many=True, context={'request': request}
+        ).data
 
 
 class UserRegistrationSerializer(DjoserCreateSerializer):

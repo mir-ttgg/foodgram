@@ -10,7 +10,6 @@ from rest_framework.decorators import action
 from rest_framework.permissions import (AllowAny, IsAuthenticated,
                                         IsAuthenticatedOrReadOnly)
 from rest_framework.response import Response
-from rest_framework.filters import SearchFilter
 
 from food.models import (Favorite, Follow, Ingredient, Recipe,
                          RecipeIngredient, ShoppingCart, Tag, User)
@@ -210,5 +209,10 @@ class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = IngredientSerializer
     permission_classes = [AllowAny]
     pagination_class = None
-    filter_backends = [SearchFilter]
-    search_fields = ['^name']
+
+    def get_queryset(self):
+        queryset = Ingredient.objects.all()
+        name = self.request.query_params.get('name')
+        if name:
+            queryset = queryset.filter(name__istartswith=name)
+        return queryset
